@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <title>Novamaker — Cotizador</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'system-ui', 'sans-serif'],
+            },
+            colors: {
+              nm: {
+                bg: '#0A0F1E',
+                surface: '#131929',
+                border: '#1E2D45',
+                accent: '#3B82F6',
+                green: '#10B981',
+                text: '#F1F5F9',
+                muted: '#64748B',
+              },
+            },
+          },
+        },
+      }
+    </script>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background-color: #0A0F1E;
+        color: #F1F5F9;
+        font-family: 'Inter', system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      input[type="range"] { accent-color: #3B82F6; }
+      input[type="number"]::-webkit-outer-spin-button,
+      input[type="number"]::-webkit-inner-spin-button { opacity: 1; }
+      ::-webkit-scrollbar { width: 4px; height: 4px; }
+      ::-webkit-scrollbar-track { background: #131929; }
+      ::-webkit-scrollbar-thumb { background: #1E2D45; border-radius: 2px; }
+      select option { background-color: #131929; color: #F1F5F9; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
