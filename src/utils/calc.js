@@ -1,4 +1,11 @@
-import { MATERIALS, SEDES } from '../config/config.js';
+import {
+  MATERIALS,
+  SEDES,
+  MODELADO_RATE_DETAL,
+  MODELADO_RATE_MAYORISTA,
+  MODELADO_COST_PER_HOUR,
+  MODELADO_TIERS,
+} from '../config/config.js';
 
 export function calcPrintCost(grams, minutes, material, sede) {
   const mat = MATERIALS[material];
@@ -34,6 +41,18 @@ export function getVolumeDiscount(qty, discounts) {
   const applicable = discounts.filter((d) => qty >= d.minQty);
   if (!applicable.length) return 0;
   return applicable[applicable.length - 1].discount;
+}
+
+// Modelado 3D — calcula precio (y costo implícito) de un tier según el canal.
+// Devuelve null si el tier no existe.
+export function calcModelado(tierId, canal) {
+  const tier = MODELADO_TIERS.find((t) => t.id === tierId);
+  if (!tier) return null;
+  const horas = tier.horas;
+  const tarifa = canal === 'Mayorista' ? MODELADO_RATE_MAYORISTA : MODELADO_RATE_DETAL;
+  const precio = horas * tarifa;
+  const costo = horas * MODELADO_COST_PER_HOUR;
+  return { tier, horas, tarifa, precio, costo };
 }
 
 const fmtCOP = new Intl.NumberFormat('es-CO', {

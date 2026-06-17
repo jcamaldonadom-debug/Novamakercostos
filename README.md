@@ -55,7 +55,7 @@ Ver [apps-script/SETUP.md](apps-script/SETUP.md) para instrucciones paso a paso.
 ```
 src/
   App.jsx              — Router principal (5 pantallas)
-  config/config.js     — Precios, materiales, sedes, catálogo
+  config/config.js     — Precios, materiales, sedes, catálogo, tiers de modelado
   utils/calc.js        — Lógica de cálculo pura (sin estado)
   services/sheets.js   — Fetch al Apps Script Web App
   components/
@@ -64,6 +64,7 @@ src/
     QuoteCustom.jsx    — Pantalla 2A: cotización custom
     QuoteCatalog.jsx   — Pantalla 2B: cotización catálogo
     PostProcessing.jsx — Toggle + lista de materiales de acabado
+    ModeladoSelector.jsx — Add-on opcional: diseño / modelado 3D (5 tiers)
     PriceSummary.jsx   — Banner sticky de precios en tiempo real
     History.jsx        — Pantalla 4: historial con filtros
 apps-script/
@@ -84,8 +85,22 @@ Margen real        = (precio_total − costo_total) / precio_total
 
 Para productos de catálogo se aplica adicionalmente un descuento por volumen sobre el precio sugerido.
 
+### Modelado 3D (add-on opcional)
+
+La mano de obra de **diseño / modelado 3D** (trabajo CAD/escultórico previo a imprimir) se cobra aparte y es **opcional**: se activa con un toggle dentro de la cotización Custom o Catálogo (igual que el posprocesado) y se suma al total como **cargo único del pedido** (no por pieza).
+
+```
+Precio modelado = horas_tier × tarifa/h
+  tarifa detal     = $25.000/h  (margen 40% incorporado)
+  tarifa mayorista = $21.429/h  (= costo/h implícito 15.000 / (1 − 0.30))
+```
+
+5 niveles de complejidad (horas estimadas): Express 0.5h · Simple 1.5h · Medio 4h · Complejo 8.5h · Paramétrico 17h. El canal (Detal/Mayorista) de la cotización determina la tarifa aplicada.
+
+El modelado queda registrado en Sheets embebido en `Descripción`/`Notas` y sumado al `PrecioTotal`. Además `Codigo.gs` incluye columnas `ModeladoTier`/`ModeladoHoras`/`ModeladoPrecio`; para poblarlas hay que **redeployar el Web App** del Apps Script.
+
 ## Modificar precios y materiales
 
-Editar `src/config/config.js`. Todos los valores están en un solo lugar: tarifas de electricidad por sede, precios de materiales, costos de posprocesado, productos de catálogo y descuentos por volumen.
+Editar `src/config/config.js`. Todos los valores están en un solo lugar: tarifas de electricidad por sede, precios de materiales, costos de posprocesado, productos de catálogo, descuentos por volumen y los tiers/tarifas de modelado 3D.
 
 Después de editar: `npm run build && npm run deploy`.

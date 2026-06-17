@@ -1,13 +1,15 @@
 import { useState, useMemo } from 'react'
 import SedeSelector from './SedeSelector.jsx'
 import PostProcessing from './PostProcessing.jsx'
+import ModeladoSelector from './ModeladoSelector.jsx'
 import PriceSummary from './PriceSummary.jsx'
-import { CATALOG_PRODUCTS, POST_PROCESSING_ITEMS, DEFAULT_MARGIN, WHOLESALE_MARGIN } from '../config/config.js'
+import { CATALOG_PRODUCTS, POST_PROCESSING_ITEMS, DEFAULT_MARGIN, WHOLESALE_MARGIN, MODELADO_TIERS } from '../config/config.js'
 import {
   calcPrintCost,
   calcPostProcessing,
   calcPrice,
   getVolumeDiscount,
+  calcModelado,
   formatCOP,
   formatDateCO,
 } from '../utils/calc.js'
@@ -37,6 +39,9 @@ export default function QuoteCatalog({ currentUser, onSaved, onBack }) {
     POST_PROCESSING_ITEMS.map((item) => ({ ...item, qty: item.defaultQty }))
   )
 
+  const [modeladoEnabled, setModeladoEnabled] = useState(false)
+  const [modeladoTier, setModeladoTier] = useState(MODELADO_TIERS[0].id)
+
   function set(field, value) {
     setForm((f) => ({ ...f, [field]: value }))
   }
@@ -56,8 +61,16 @@ export default function QuoteCatalog({ currentUser, onSaved, onBack }) {
     const basePrice = calcPrice(variablePerPiece, margin)
     const volDiscount = getVolumeDiscount(qty, product.volumeDiscounts)
     const precioPieza = basePrice * (1 - volDiscount)
-    const precioTotal = precioPieza * qty
-    const variableTotal = variablePerPiece * qty
+    const printTotal = precioPieza * qty
+
+    // Modelado 3D — cargo único del pedido (no por pieza)
+    const modelado = modeladoEnabled ? calcModelado(modeladoTier, form.canal) : null
+    const modeladoPrecio = modelado ? modelado.precio : 0
+    const modeladoCosto = modelado ? modelado.costo : 0
+    const modeladoHoras = modelado ? modelado.horas : 0
+
+    const precioTotal = printTotal + modeladoPrecio
+    const variableTotal = variablePerPiece * qty + modeladoCosto
     const margenReal = precioTotal > 0 ? (precioTotal - variableTotal) / precioTotal : 0
 
     return {
@@ -67,11 +80,13 @@ export default function QuoteCatalog({ currentUser, onSaved, onBack }) {
       basePrice,
       volDiscount,
       precioPieza,
+      modeladoPrecio,
+      modeladoHoras,
       precioTotal,
       variableTotal,
       margenReal,
     }
-  }, [form, product, postEnabled, postItems, margin])
+  }, [form, product, postEnabled, postItems, margin, modeladoEnabled, modeladoTier])
 
   function canGoNext() {
     return form.cliente.trim() && product
@@ -84,13 +99,18 @@ export default function QuoteCatalog({ currentUser, onSaved, onBack }) {
 
     const qty = Math.max(1, parseInt(form.cantidad) || 1)
     const now = new Date()
+    const modeladoTierObj = modeladoEnabled ? MODELADO_TIERS.find((t) => t.id === modeladoTier) : null
+    const notasBase = form.notas.trim()
+    const modeladoNota = modeladoTierObj
+      ? `Modelado 3D — ${modeladoTierObj.label} (${calc.modeladoHoras}h): ${formatCOP(calc.modeladoPrecio)}`
+      : ''
     const data = {
       id: now.toISOString(),
       fecha: formatDateCO(now),
       autor: currentUser,
       tipo: 'Catálogo',
       cliente: form.cliente.trim(),
-      descripcion: product.label,
+      descripcion: modeladoTierObj ? `${product.label} + Modelado 3D: ${modeladoTierObj.label}` : product.label,
       sede: form.sede,
       material: product.material,
       minutos: product.minutes,
@@ -105,7 +125,10 @@ export default function QuoteCatalog({ currentUser, onSaved, onBack }) {
       margen: Math.round(calc.margenReal * 1000) / 10,
       canal: form.canal,
       estado: 'Pendiente',
-      notas: form.notas.trim(),
+      notas: [notasBase, modeladoNota].filter(Boolean).join(' · '),
+      modeladoTier: modeladoTierObj ? modeladoTierObj.label : '',
+      modeladoHoras: modeladoTierObj ? calc.modeladoHoras : '',
+      modeladoPrecio: modeladoTierObj ? Math.round(calc.modeladoPrecio) : '',
     }
 
     const result = await saveQuote(data)
@@ -316,6 +339,18 @@ export default function QuoteCatalog({ currentUser, onSaved, onBack }) {
               />
             </div>
 
+            {/* Modelado 3D */}
+            <div>
+              <label className={LABEL_CLS}>¿Incluir diseño / modelado 3D?</label>
+              <ModeladoSelector
+                enabled={modeladoEnabled}
+                onToggle={() => setModeladoEnabled((v) => !v)}
+                tierId={modeladoTier}
+                onTierChange={setModeladoTier}
+                canal={form.canal}
+              />
+            </div>
+
             {/* Desglose */}
             {calc && (
               <div className="bg-nm-surface border border-nm-border rounded-xl p-4 space-y-2 text-sm">
@@ -347,6 +382,12 @@ export default function QuoteCatalog({ currentUser, onSaved, onBack }) {
                   <span className="text-nm-muted">Precio final / pieza</span>
                   <span className="text-nm-accent">{formatCOP(calc.precioPieza)}</span>
                 </div>
+                {calc.modeladoPrecio > 0 && (
+                  <div className="flex justify-between text-nm-accent pt-1">
+                    <span>Modelado 3D ({calc.modeladoHoras}h) — cargo único</span>
+                    <span>+ {formatCOP(calc.modeladoPrecio)}</span>
+                  </div>
+                )}
               </div>
             )}
 

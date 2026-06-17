@@ -11,7 +11,10 @@ var HEADERS = [
   'Sede', 'Material', 'Minutos', 'Gramos', 'Cantidad',
   'CostoMaterial', 'CostoElectricidad', 'CostoPosprocesado',
   'CostoVariable', 'PrecioPieza', 'PrecioTotal', 'Margen',
-  'Canal', 'Estado', 'Notas'
+  'Canal', 'Estado', 'Notas',
+  // ── Modelado 3D (servicio de diseño opcional). Columnas nuevas append-only.
+  //    Requiere REDEPLEGAR el Web App para que se empiecen a poblar.
+  'ModeladoTier', 'ModeladoHoras', 'ModeladoPrecio'
 ];
 
 // Mapeo de campos JSON → columna del header
@@ -36,7 +39,11 @@ var FIELD_MAP = {
   margen:             'Margen',
   canal:              'Canal',
   estado:             'Estado',
-  notas:              'Notas'
+  notas:              'Notas',
+  // Modelado 3D — servicio de diseño opcional (columnas nuevas)
+  modeladoTier:       'ModeladoTier',
+  modeladoHoras:      'ModeladoHoras',
+  modeladoPrecio:     'ModeladoPrecio'
 };
 
 function getSheet() {
@@ -131,6 +138,10 @@ function buildComentarios(data) {
     ' | Total: $' + Math.round(data.precioTotal || 0).toLocaleString('es-CO');
   var gramos = 'Material: ' + (data.material || '') + ' · ' + (data.gramos || 0) + 'g · ' + (data.minutos || 0) + 'min';
   var lines = [resumen, costos, gramos];
+  if (data.modeladoTier) {
+    lines.push('Modelado 3D: ' + data.modeladoTier + ' (' + (data.modeladoHoras || 0) + 'h) · $' +
+      Math.round(data.modeladoPrecio || 0).toLocaleString('es-CO'));
+  }
   if (data.notas && String(data.notas).trim()) {
     lines.push('Notas: "' + String(data.notas).trim() + '"');
   }
