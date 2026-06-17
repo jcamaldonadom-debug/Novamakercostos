@@ -75,3 +75,21 @@ export const CATALOG_PRODUCTS = [
 
 export const DEFAULT_MARGIN = 0.4;
 export const WHOLESALE_MARGIN = 0.3;
+
+// ─── MODELADO 3D — mano de obra de diseño (servicio opcional) ────────────────
+// Tarifa detal $25.000/h con margen 40% ya incorporado.
+// Tarifa mayorista $21.429/h = costo/h implícito 15.000 / (1 − 0.30).
+// El costo/h implícito (15.000) se usa para que el margen real siga siendo real.
+export const MODELADO_RATE_DETAL = 25000;
+export const MODELADO_RATE_MAYORISTA = 21429;
+export const MODELADO_COST_PER_HOUR = 15000;
+
+// 5 niveles de complejidad. Precio = horas × tarifa (según canal). Sin magic numbers:
+// los precios se derivan de estas horas + las tarifas de arriba.
+export const MODELADO_TIERS = [
+  { id: 'express',     label: 'Express / retoque',          desc: 'Ajuste menor, reparación de malla, reescalado o fix de archivo existente', horas: 0.5 },
+  { id: 'simple',      label: 'Simple',                     desc: 'Pieza geométrica básica, 1 referencia, sin ensamble',                      horas: 1.5 },
+  { id: 'medio',       label: 'Medio',                      desc: 'Detalle moderado, ensamble simple, 2–3 referencias',                       horas: 4   },
+  { id: 'complejo',    label: 'Complejo',                   desc: 'Orgánico/escultórico, alto detalle, ingeniería inversa básica',            horas: 8.5 },
+  { id: 'parametrico', label: 'Paramétrico / Ing. inversa', desc: 'CAD paramétrico, tolerancias, escaneo→modelo, múltiples iteraciones',       horas: 17  },
+];
